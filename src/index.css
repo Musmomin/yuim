@@ -1,0 +1,16 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--color-slate-50);
+  color: var(--color-slate-900);
+}
+
+/* Ataylab bitta (yorug') mavzu */
+:root {
+  color-scheme: light;
+}
