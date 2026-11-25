@@ -1,21 +1,22 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { FlaskConical, LogOut, Menu, RotateCcw, X } from 'lucide-react';
-import { ROLES } from '../data/mock';
-import type { Role } from '../data/types';
-import { tasksFor, useStore } from '../store';
+import { ROLES, roleLabel } from '../../shared/roles';
+import type { Role } from '../../shared/types';
+import { tasksFor } from '../../shared/workflow';
+import { useStore } from '../store';
 import { NAV } from './nav';
+import { ErrorBanner } from './ui';
 
 export default function Layout({ children }: { children: ReactNode }) {
-  const { role, user, apps, login, logout, reset } = useStore();
+  const { role, actor, user, apps, demoLogin, demo, logout, reset, error, clearError } = useStore();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   const navigate = useNavigate();
   useEffect(() => setOpen(false), [loc.pathname]);
 
   const items = NAV.filter((n) => role && n.roles.includes(role));
-  const taskCount = tasksFor(role, apps).length;
-  const roleInfo = ROLES.find((r) => r.id === role);
+  const taskCount = tasksFor(actor, apps).length;
 
   return (
     <div className="min-h-screen bg-slate-50 lg:flex">
@@ -49,7 +50,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-slate-800 p-4 text-xs text-slate-500">v0.1 · test versiya</div>
+        <div className="border-t border-slate-800 p-4 text-xs text-slate-500">v0.2{demoLogin ? ' · namoyish rejimi' : ''}</div>
       </aside>
       {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setOpen(false)} />}
 
@@ -58,42 +59,51 @@ export default function Layout({ children }: { children: ReactNode }) {
           <button className="rounded-lg p-1.5 hover:bg-slate-100 lg:hidden" onClick={() => setOpen(true)} aria-label="Menyu">
             <Menu size={20} />
           </button>
-          <span className="hidden items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 sm:inline-flex">
-            <FlaskConical size={14} /> Test rejimi
-          </span>
+          {demoLogin && (
+            <span className="hidden items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 sm:inline-flex">
+              <FlaskConical size={14} /> Namoyish rejimi
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-2">
-            <select
-              value={role ?? ''}
-              onChange={(e) => {
-                login(e.target.value as Role);
-                navigate('/');
-              }}
-              className="max-w-[170px] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm sm:max-w-none"
-              title="Test uchun rolni almashtirish"
-            >
-              {ROLES.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.label}
-                </option>
-              ))}
-            </select>
+            {demoLogin && (
+              <select
+                value={role ?? ''}
+                onChange={async (e) => {
+                  await demo(e.target.value as Role);
+                  navigate('/');
+                }}
+                className="max-w-[170px] rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm sm:max-w-none"
+                title="Namoyish uchun rolni almashtirish"
+              >
+                {ROLES.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            )}
             <div className="hidden text-right md:block">
               <div className="text-sm font-medium text-slate-900">{user}</div>
-              <div className="text-xs text-slate-500">{roleInfo?.label}</div>
+              <div className="text-xs text-slate-500">{role && roleLabel(role)}</div>
             </div>
-            <button
-              onClick={() => reset()}
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-              title="Test ma'lumotlarini boshlang'ich holatga qaytarish"
-            >
-              <RotateCcw size={18} />
-            </button>
+            {demoLogin && (
+              <button
+                onClick={() => reset()}
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                title="Test ma'lumotlarini boshlang'ich holatga qaytarish"
+              >
+                <RotateCcw size={18} />
+              </button>
+            )}
             <button onClick={logout} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" title="Chiqish">
               <LogOut size={18} />
             </button>
           </div>
         </header>
-        <main className="mx-auto max-w-7xl p-4 lg:p-8">{children}</main>
+        <main className="mx-auto max-w-7xl p-4 lg:p-8">
+          {error && <ErrorBanner message={error} onClose={clearError} />}
+          {children}
+        </main>
       </div>
     </div>
   );

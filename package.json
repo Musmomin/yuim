@@ -3,18 +3,25 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "workspaces": [
+    "server"
+  ],
   "scripts": {
     "dev": "vite --host",
+    "dev:server": "npm run dev -w yuim-server",
     "build:artifact": "tsc -p tsconfig.json && vite build --mode artifact --outDir dist-artifact && node scripts/build-artifact.mjs",
     "build": "tsc -p tsconfig.json && vite build",
+    "build:server": "npm run build -w yuim-server",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json && npm run typecheck -w yuim-server",
+    "test": "npm test -w yuim-server"
   },
   "dependencies": {
     "lucide-react": "0.511.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-router-dom": "7.18.5"
+    "react-router-dom": "7.18.5",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.8",

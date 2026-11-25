@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Badge, Card, Empty, PageHeader } from '../components/ui';
-import { date, shortMoney } from '../lib/format';
+import { date, shortMoney } from '../../shared/format';
 import { STAGE_LABEL, STAGE_TONE } from '../lib/labels';
 import { useStore } from '../store';
 

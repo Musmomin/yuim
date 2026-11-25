@@ -1,17 +1,21 @@
 // Test ma'lumotlari. Barcha kompaniya va shaxslar to'qima.
-import { analyze } from '../ai/analyze';
-import type { Application, ApplicationInput, AuditEntry, Investor, MonthlyReport, Review, Role, Stage } from './types';
+// Server `npm run db:seed` da va frontendning namoyish (artifact) rejimida ishlatiladi.
+import { analyze } from './analyze';
+import type { Application, ApplicationInput, AuditEntry, Investor, MonthlyReport, Review, Role, Stage, User } from './types';
 
-export const ROLES: { id: Role; label: string; desc: string; user: string }[] = [
-  { id: 'admin', label: 'Administrator', desc: 'Tizim, foydalanuvchilar va sozlamalar', user: 'A. Karimov' },
-  { id: 'menejer', label: 'Loyiha menejeri', desc: 'Arizalarni qabul qiladi va jarayonni yuritadi', user: 'D. Rasulov' },
-  { id: 'komplayens', label: "Komplayens qo'mitasi", desc: 'Faoliyat va shartlarning investitsiya siyosatiga muvofiqligi', user: 'S. Yusupova' },
-  { id: 'investitsiya', label: "Investitsiya qo'mitasi", desc: 'Moliyaviy baho, risk va foyda taqsimoti nisbati', user: 'B. Tursunov' },
-  { id: 'yuridik', label: 'Yuridik xizmat', desc: 'Shartnoma va hujjatlarning huquqiy ekspertizasi', user: 'N. Aliyeva' },
-  { id: 'audit', label: 'Ichki audit', desc: 'Jarayon va qarorlarni mustaqil taftish qiladi', user: 'O. Hamidov' },
-  { id: 'investor', label: 'Investor', desc: 'Portfel, shartnomalar va daromadni kuzatadi', user: 'Orient Kapital MChJ' },
-  { id: 'biznes', label: 'Ijrochi sherik (biznes)', desc: 'Investitsiya uchun ariza beradi, hisobot topshiradi', user: "Navro'z Tekstil MChJ" },
+/** Har bir rol uchun bitta test foydalanuvchisi. Parol serverda SEED_PASSWORD orqali beriladi. */
+export const SEED_USERS: User[] = [
+  { id: 'u-admin', login: 'admin', name: 'A. Karimov', role: 'admin' },
+  { id: 'u-menejer', login: 'menejer', name: 'D. Rasulov', role: 'menejer' },
+  { id: 'u-komplayens', login: 'komplayens', name: 'S. Yusupova', role: 'komplayens' },
+  { id: 'u-investitsiya', login: 'investitsiya', name: 'B. Tursunov', role: 'investitsiya' },
+  { id: 'u-yuridik', login: 'yuridik', name: 'N. Aliyeva', role: 'yuridik' },
+  { id: 'u-audit', login: 'audit', name: 'O. Hamidov', role: 'audit' },
+  { id: 'u-investor', login: 'investor', name: 'Orient Kapital MChJ', role: 'investor', investorId: 'inv-1' },
+  { id: 'u-biznes', login: 'biznes', name: "Navro'z Tekstil MChJ", role: 'biznes' },
 ];
+
+export const seedUserFor = (role: Role) => SEED_USERS.find((u) => u.role === role)!;
 
 export const INVESTORS: Investor[] = [
   { id: 'inv-1', name: 'Orient Kapital MChJ', type: 'MChJ', stir: '305 118 274', contact: '+998 71 200-11-22', capital: 5_000_000_000 },
@@ -66,10 +70,14 @@ type Seed = ApplicationInput & {
 
 function make(s: Seed): Application {
   const { reviews, ...rest } = s;
+  const owner = SEED_USERS.find((u) => u.role === 'biznes' && u.name === s.company);
   return {
+    managerId: 'u-menejer',
     manager: 'D. Rasulov',
     reports: [],
     ...rest,
+    ownerId: owner?.id,
+    investorId: s.investor ? INVESTORS.find((i) => i.name === s.investor)?.id : undefined,
     reviews: { komplayens: pending, investitsiya: pending, yuridik: pending, ...reviews },
     ai: analyze(s),
   };
@@ -87,7 +95,7 @@ export function seedApplications(): Application[] {
       reviews: { komplayens: ok('S. Yusupova', '2026-11-17T11:05:00', "Faoliyat turi ruxsat etilgan ro'yxatda.") },
     }),
     make({
-      id: 'YU-2026-030', submittedAt: '2026-11-12T15:40:00', stage: 'korik',
+      id: 'YU-2026-030', submittedAt: '2026-11-12T15:40:00', stage: 'qaytarildi',
       company: 'Namangan Non Kombinati MChJ', stir: '308 220 913', director: 'A. Qodirov', phone: '+998 91 220-33-44',
       region: 'Namangan', sector: 'Oziq-ovqat ishlab chiqarish', activity: 'Non va qandolat mahsulotlari ishlab chiqarish',
       amount: 500_000_000, termMonths: 12, investorShare: 36,

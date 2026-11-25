@@ -13,7 +13,7 @@ import {
   Users,
   type LucideIcon,
 } from 'lucide-react';
-import type { Role } from '../data/types';
+import type { Role } from '../../shared/types';
 
 const STAFF: Role[] = ['admin', 'menejer', 'komplayens', 'investitsiya', 'yuridik', 'audit'];
 

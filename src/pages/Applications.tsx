@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { FilePlus2, Search } from 'lucide-react';
 import AppTable from '../components/AppTable';
 import { Button, Card, inputCls, PageHeader } from '../components/ui';
-import type { Stage } from '../data/types';
+import type { Stage } from '../../shared/types';
 import { STAGE_LABEL } from '../lib/labels';
 import { useStore } from '../store';
 
-const FILTERS: (Stage | 'all')[] = ['all', 'yangi', 'korik', 'yuridik', 'imzolash', 'moliyalashtirildi', 'yakunlandi', 'rad'];
+const FILTERS: (Stage | 'all')[] = ['all', 'yangi', 'korik', 'qaytarildi', 'yuridik', 'imzolash', 'moliyalashtirildi', 'yakunlandi', 'rad'];
 
 export default function Applications() {
   const { apps, role } = useStore();

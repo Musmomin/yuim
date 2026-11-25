@@ -1,14 +1,51 @@
-import { ArrowDown, ArrowRight, Bot, Building2, CheckCircle2, FlaskConical, Landmark, Scale, ShieldCheck, Users, Wallet } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { ArrowDown, ArrowRight, Bot, Building2, CheckCircle2, FlaskConical, Landmark, LogIn, Scale, ShieldCheck, Users, Wallet } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { ROLES } from '../data/mock';
+import { ROLES } from '../../shared/roles';
+import { errorMessage } from '../api';
+import { Button, ErrorBanner, Field, inputCls } from '../components/ui';
 import { MISSION, ORGANS, PROCESS, ROADMAP } from '../data/org';
 import { useStore } from '../store';
 
 const ORGAN_ICONS: LucideIcon[] = [ShieldCheck, Scale, Landmark, Building2, Users, Bot];
 
-/** Loyiha ta'rifi. `landing` rejimida kirish sahifasi sifatida rollarni ham ko'rsatadi. */
-export default function About({ landing = false }: { landing?: boolean }) {
+function LoginForm() {
   const { login } = useStore();
+  const [l, setL] = useState('');
+  const [p, setP] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    setErr(null);
+    try {
+      await login(l, p);
+    } catch (x) {
+      setErr(errorMessage(x));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <form onSubmit={submit} className="max-w-sm space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+      {err && <ErrorBanner message={err} />}
+      <Field label="Login">
+        <input required autoComplete="username" value={l} onChange={(e) => setL(e.target.value)} className={inputCls} />
+      </Field>
+      <Field label="Parol">
+        <input required type="password" autoComplete="current-password" value={p} onChange={(e) => setP(e.target.value)} className={inputCls} />
+      </Field>
+      <Button type="submit" disabled={busy} className="w-full">
+        <LogIn size={16} /> {busy ? 'Kirilmoqda…' : 'Kirish'}
+      </Button>
+    </form>
+  );
+}
+
+/** Loyiha ta'rifi. `landing` rejimida kirish sahifasi: login formasi va (namoyishda) rollar. */
+export default function About({ landing = false }: { landing?: boolean }) {
+  const { demo, demoLogin, error } = useStore();
 
   return (
     <div className={landing ? 'min-h-screen bg-slate-50' : ''}>
@@ -18,9 +55,11 @@ export default function About({ landing = false }: { landing?: boolean }) {
           {landing && (
             <div className="mb-10 flex items-center justify-between">
               <div className="text-2xl font-bold tracking-wide">YUIM</div>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-medium text-amber-300">
-                <FlaskConical size={14} /> Test versiya
-              </span>
+              {demoLogin && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 px-3 py-1 text-xs font-medium text-amber-300">
+                  <FlaskConical size={14} /> Namoyish rejimi
+                </span>
+              )}
             </div>
           )}
           <p className="text-sm font-medium uppercase tracking-widest text-emerald-400">Loyiha maqsadi</p>
@@ -33,7 +72,7 @@ export default function About({ landing = false }: { landing?: boolean }) {
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#demo" onClick={(e) => { e.preventDefault(); document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }); }}
                 className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-500">
-                Demo tizimga kirish <ArrowDown size={16} />
+                Tizimga kirish <ArrowDown size={16} />
               </a>
             </div>
           )}
@@ -116,15 +155,26 @@ export default function About({ landing = false }: { landing?: boolean }) {
           </div>
         </section>
 
-        {/* Demo rollar */}
+        {/* Kirish */}
         {landing && (
-          <section id="demo" className="scroll-mt-6">
-            <SectionTitle eyebrow="Demo" title="Tizimni rol bo'yicha ko'ring" text="Har bir rol o'z vazifalari va ekranlarini ko'radi. Ichkarida rolni yuqoridagi ro'yxatdan almashtirish mumkin." />
+          <section id="demo" className="scroll-mt-6 space-y-10">
+            {error && <ErrorBanner message={error} />}
+            <div>
+              <SectionTitle eyebrow="Kirish" title="Tizimga kirish" text="Login va parolingizni administrator beradi." />
+              <div className="mt-6">
+                <LoginForm />
+              </div>
+            </div>
+          </section>
+        )}
+        {landing && demoLogin && (
+          <section className="scroll-mt-6">
+            <SectionTitle eyebrow="Namoyish" title="Yoki rolni tanlab ko'ring" text="Namoyish rejimida parolsiz kirish mumkin. Ichkarida rolni yuqoridagi ro'yxatdan almashtirish mumkin." />
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {ROLES.map((r) => (
                 <button
                   key={r.id}
-                  onClick={() => login(r.id)}
+                  onClick={() => demo(r.id)}
                   className="group rounded-xl border border-slate-200 bg-white p-5 text-left transition hover:border-emerald-600 hover:shadow-md focus-visible:outline-2 focus-visible:outline-emerald-600"
                 >
                   <div className="flex items-center justify-between">
@@ -132,7 +182,6 @@ export default function About({ landing = false }: { landing?: boolean }) {
                     <ArrowRight size={16} className="text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-emerald-600" />
                   </div>
                   <p className="mt-2 text-sm text-slate-600">{r.desc}</p>
-                  <p className="mt-3 text-xs text-slate-400">{r.user}</p>
                 </button>
               ))}
             </div>
@@ -142,7 +191,7 @@ export default function About({ landing = false }: { landing?: boolean }) {
 
       {landing && (
         <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-          YUIM · test versiya · barcha kompaniya va shaxslar namuna sifatida to'qilgan
+          YUIM{demoLogin ? " · namoyish rejimi · barcha kompaniya va shaxslar namuna sifatida to'qilgan" : ''}
         </footer>
       )}
     </div>

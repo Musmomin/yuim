@@ -1,4 +1,4 @@
-import type { ActivityStatus, ReviewKey, ReviewStatus, RiskLevel, Role, Stage } from '../data/types';
+import type { ActivityStatus, ReviewKey, ReviewStatus, RiskLevel, Role, Stage } from '../../shared/types';
 
 export type Tone = 'slate' | 'green' | 'amber' | 'red' | 'blue' | 'violet';
 
@@ -14,6 +14,7 @@ export const STAGE_FLOW: { id: Stage; label: string }[] = [
 export const STAGE_LABEL: Record<Stage, string> = {
   yangi: 'Yangi ariza',
   korik: "Qo'mitalar ko'rigi",
+  qaytarildi: 'Qayta ishlashga qaytarildi',
   yuridik: 'Yuridik ekspertiza',
   imzolash: 'Shartnoma imzolash',
   moliyalashtirildi: 'Moliyalashtirildi',
@@ -24,6 +25,7 @@ export const STAGE_LABEL: Record<Stage, string> = {
 export const STAGE_TONE: Record<Stage, Tone> = {
   yangi: 'blue',
   korik: 'amber',
+  qaytarildi: 'amber',
   yuridik: 'violet',
   imzolash: 'violet',
   moliyalashtirildi: 'green',

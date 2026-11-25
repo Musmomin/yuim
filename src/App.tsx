@@ -25,7 +25,8 @@ function Guard({ path, el }: { path: string; el: ReactElement }) {
 }
 
 function Shell() {
-  const { role } = useStore();
+  const { role, ready } = useStore();
+  if (!ready) return <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">Yuklanmoqda…</div>;
   if (!role) return <Login />;
   return (
     <Layout>
@@ -34,7 +35,9 @@ function Shell() {
         <Route path="/vazifalar" element={<Guard path="/vazifalar" el={<Tasks />} />} />
         <Route path="/arizalar" element={<Guard path="/arizalar" el={<Applications />} />} />
         <Route path="/arizalar/yangi" element={<Guard path="/arizalar/yangi" el={<NewApplication />} />} />
+        {/* Ko'rish huquqi serverda tekshiriladi: ruxsat bo'lmasa 404 qaytadi */}
         <Route path="/arizalar/:id" element={<ApplicationDetail />} />
+        <Route path="/arizalar/:id/tahrir" element={<NewApplication />} />
         <Route path="/shartnomalar" element={<Guard path="/shartnomalar" el={<Agreements />} />} />
         <Route path="/monitoring" element={<Guard path="/monitoring" el={<Monitoring />} />} />
         <Route path="/taqsimot" element={<Guard path="/taqsimot" el={<Distribution />} />} />

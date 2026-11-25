@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import type { Stage } from '../data/types';
+import type { Stage } from '../../shared/types';
 import { STAGE_FLOW, type Tone } from '../lib/labels';
 import { Check, X } from 'lucide-react';
 
@@ -113,7 +113,8 @@ export function StageTracker({ stage }: { stage: Stage }) {
       </div>
     );
   }
-  const idx = STAGE_FLOW.findIndex((s) => s.id === stage);
+  // Qaytarilgan ariza qo'mitalar ko'rigi bosqichida turadi (tuzatilgach qayta yuboriladi)
+  const idx = STAGE_FLOW.findIndex((s) => s.id === (stage === 'qaytarildi' ? 'korik' : stage));
   return (
     <ol className="flex gap-1 overflow-x-auto pb-1">
       {STAGE_FLOW.map((s, i) => {
@@ -129,6 +130,19 @@ export function StageTracker({ stage }: { stage: Stage }) {
         );
       })}
     </ol>
+  );
+}
+
+export function ErrorBanner({ message, onClose }: { message: string; onClose?: () => void }) {
+  return (
+    <div role="alert" className="mb-4 flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+      <span className="flex-1">{message}</span>
+      {onClose && (
+        <button onClick={onClose} aria-label="Yopish" className="text-rose-500 hover:text-rose-800">
+          <X size={16} />
+        </button>
+      )}
+    </div>
   );
 }
 

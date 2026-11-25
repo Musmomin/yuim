@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Info } from 'lucide-react';
 import { Card, CardHeader, Field, inputCls, KV, PageHeader } from '../components/ui';
-import { money } from '../lib/format';
+import { money } from '../../shared/format';
 import { profitOf, useStore } from '../store';
 
 export default function Distribution() {

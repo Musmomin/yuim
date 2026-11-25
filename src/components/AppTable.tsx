@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import type { Application } from '../data/types';
-import { date, shortMoney } from '../lib/format';
+import type { Application } from '../../shared/types';
+import { date, shortMoney } from '../../shared/format';
 import { RISK_LABEL, RISK_TONE, STAGE_LABEL, STAGE_TONE } from '../lib/labels';
 import { Badge, Empty } from './ui';
 

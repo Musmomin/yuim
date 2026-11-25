@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import { Badge, Card, CardHeader, Empty, PageHeader } from '../components/ui';
-import type { Application } from '../data/types';
-import { monthLabel, shortMoney } from '../lib/format';
+import type { Application } from '../../shared/types';
+import { monthLabel, shortMoney } from '../../shared/format';
 import { profitOf, useStore } from '../store';
 
 export default function Monitoring() {

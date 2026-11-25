@@ -1,6 +1,6 @@
 import { Ban, CheckCircle2 } from 'lucide-react';
 import { Card, CardHeader, PageHeader } from '../components/ui';
-import { CRITERIA, RESTRICTED, SECTORS } from '../data/policy';
+import { CRITERIA, RESTRICTED, SECTORS } from '../../shared/policy';
 
 export default function Policy() {
   return (

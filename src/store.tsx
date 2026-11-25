@@ -1,159 +1,141 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { analyze } from './ai/analyze';
-import { ROLES, seedApplications, seedAudit } from './data/mock';
-import type { Application, ApplicationInput, AuditEntry, ReviewKey, ReviewStatus, Role } from './data/types';
-import { REVIEW_BODY, REVIEW_LABEL } from './lib/labels';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Application, AuditEntry, Investor, Role, User } from '../shared/types';
+import type { Actor } from '../shared/workflow';
+import { isStaff } from '../shared/workflow';
+import { type Api, errorMessage } from './api';
+import { httpApi } from './api/http';
+import { localApi } from './api/local';
 
-// Test rejimi: holat brauzerda saqlanadi. Backend ulanganda shu qatlam API'ga almashtiriladi.
-const KEY = 'yuim-test-v2';
+// Artifact (claude.ai) build'ida backend yo'q — brauzer ichidagi namoyish rejimi ishlatiladi
+export const api: Api = import.meta.env.MODE === 'artifact' ? localApi : httpApi;
 
-interface State {
+interface Ctx {
+  /** Birinchi yuklash tugadimi (sessiya tekshirildi) */
+  ready: boolean;
+  demoLogin: boolean;
+  me: User | null;
   role: Role | null;
+  actor: Actor | null;
+  user: string;
   apps: Application[];
   audit: AuditEntry[];
-}
-
-function fresh(): State {
-  return { role: null, apps: seedApplications(), audit: seedAudit() };
-}
-
-function load(): State {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as State;
-  } catch {
-    /* saqlash imkoni yo'q — test ma'lumoti bilan davom etamiz */
-  }
-  return fresh();
-}
-
-interface Ctx extends State {
-  user: string;
-  login: (r: Role) => void;
-  logout: () => void;
-  submitToCommittees: (id: string) => void;
-  review: (id: string, key: ReviewKey, status: Exclude<ReviewStatus, 'kutilmoqda'>, comment: string) => void;
-  fund: (id: string, investor: string) => void;
-  complete: (id: string) => void;
-  addApplication: (input: ApplicationInput) => string;
-  reset: () => void;
+  investors: Investor[];
+  /** Har yangilanishda oshadi — sahifalar o'z ma'lumotini qayta yuklashi uchun */
+  version: number;
+  error: string | null;
+  clearError: () => void;
+  refresh: () => Promise<void>;
+  login: (login: string, password: string) => Promise<void>;
+  demo: (role: Role) => Promise<void>;
+  logout: () => Promise<void>;
+  reset: () => Promise<void>;
+  /** Amalni bajaradi, xatoni umumiy xabar sifatida ko'rsatadi, so'ng ma'lumotni yangilaydi */
+  perform: <T>(fn: () => Promise<T>) => Promise<T | undefined>;
 }
 
 const StoreCtx = createContext<Ctx | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<State>(load);
+  const [ready, setReady] = useState(false);
+  const [demoLogin, setDemoLogin] = useState(false);
+  const [me, setMe] = useState<User | null>(null);
+  const [apps, setApps] = useState<Application[]>([]);
+  const [audit, setAudit] = useState<AuditEntry[]>([]);
+  const [investors, setInvestors] = useState<Investor[]>([]);
+  const [version, setVersion] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = useCallback(async (u: User | null) => {
+    if (!u) {
+      setApps([]);
+      setAudit([]);
+      setInvestors([]);
+      return;
+    }
+    const staff = isStaff(u.role);
+    const [a, au, inv] = await Promise.all([api.applications(), staff ? api.audit() : [], staff ? api.investors() : []]);
+    setApps(a);
+    setAudit(au);
+    setInvestors(inv);
+    setVersion((v) => v + 1);
+  }, []);
+
+  const refresh = useCallback(async () => {
+    const u = await api.me();
+    setMe(u);
+    await loadData(u);
+  }, [loadData]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(state));
-    } catch {
-      /* e'tiborsiz */
-    }
-  }, [state]);
+    (async () => {
+      try {
+        const cfg = await api.config();
+        setDemoLogin(cfg.demoLogin);
+        await refresh();
+      } catch (e) {
+        setError(errorMessage(e));
+      } finally {
+        setReady(true);
+      }
+    })();
+  }, [refresh]);
 
-  const user = ROLES.find((r) => r.id === state.role)?.user ?? '';
-
-  const entry = (action: string, target?: string): AuditEntry => ({
-    id: Math.random().toString(36).slice(2),
-    at: new Date().toISOString(),
-    user,
-    role: state.role ?? 'admin',
-    action,
-    target,
-  });
-
-  const updateApp = (id: string, fn: (a: Application) => Application, action: string) =>
-    setState((s) => ({
-      ...s,
-      apps: s.apps.map((a) => (a.id === id ? fn(a) : a)),
-      audit: [entry(action, id), ...s.audit],
-    }));
-
-  const value: Ctx = {
-    ...state,
-    user,
-    login: (role) => setState((s) => ({ ...s, role })),
-    logout: () => setState((s) => ({ ...s, role: null })),
-
-    submitToCommittees: (id) => updateApp(id, (a) => ({ ...a, stage: 'korik' }), "Ariza qo'mitalarga yuborildi"),
-
-    review: (id, key, status, comment) =>
-      updateApp(
-        id,
-        (a) => {
-          const reviews = { ...a.reviews, [key]: { status, by: user, at: new Date().toISOString(), comment } };
-          let stage = a.stage;
-          if (status === 'rad') stage = 'rad';
-          else if (key !== 'yuridik' && reviews.komplayens.status === 'tasdiqlandi' && reviews.investitsiya.status === 'tasdiqlandi') stage = 'yuridik';
-          else if (key === 'yuridik' && status === 'tasdiqlandi') stage = 'imzolash';
-          return { ...a, reviews, stage };
-        },
-        `${REVIEW_BODY[key].title}: ${REVIEW_LABEL[status].toLowerCase()}`,
-      ),
-
-    fund: (id, investor) =>
-      setState((s) => {
-        const year = new Date().getFullYear();
-        const used = s.apps
-          .filter((a) => a.agreementNo?.startsWith(`OSh-${year}/`))
-          .map((a) => Number(a.agreementNo!.split('/')[1]));
-        const n = Math.max(0, ...used) + 1;
-        const agreementNo = `OSh-${year}/${String(n).padStart(3, '0')}`;
-        return {
-          ...s,
-          apps: s.apps.map((a) =>
-            a.id === id ? { ...a, stage: 'moliyalashtirildi', investor, agreementNo, fundedAt: new Date().toISOString() } : a,
-          ),
-          audit: [entry(`Shartnoma ${agreementNo} imzolandi, moliyalashtirildi (${investor})`, id), ...s.audit],
-        };
-      }),
-
-    complete: (id) => updateApp(id, (a) => ({ ...a, stage: 'yakunlandi' }), 'Shartnoma yakunlandi, yakuniy hisob-kitob qilindi'),
-
-    addApplication: (input) => {
-      const id = `YU-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`;
-      const app: Application = {
-        ...input,
-        id,
-        submittedAt: new Date().toISOString(),
-        stage: 'yangi',
-        manager: 'D. Rasulov',
-        reviews: { komplayens: { status: 'kutilmoqda' }, investitsiya: { status: 'kutilmoqda' }, yuridik: { status: 'kutilmoqda' } },
-        ai: analyze(input),
-        reports: [],
-      };
-      setState((s) => ({ ...s, apps: [app, ...s.apps], audit: [entry('Yangi ariza topshirildi', id), ...s.audit] }));
-      return id;
-    },
-
-    reset: () => setState({ ...fresh(), role: state.role }),
-  };
+  const value = useMemo<Ctx>(() => {
+    const actor: Actor | null = me ? { id: me.id, name: me.name, role: me.role, investorId: me.investorId } : null;
+    const perform: Ctx['perform'] = async (fn) => {
+      try {
+        const r = await fn();
+        await refresh();
+        return r;
+      } catch (e) {
+        setError(errorMessage(e));
+        // Holat boshqa foydalanuvchi tomonidan o'zgargan bo'lishi mumkin — eng so'nggisini ko'rsatamiz
+        refresh().catch(() => {});
+        return undefined;
+      }
+    };
+    const enter = async (u: User) => {
+      setError(null);
+      setMe(u);
+      await loadData(u);
+    };
+    return {
+      ready,
+      demoLogin,
+      me,
+      role: me?.role ?? null,
+      actor,
+      user: me?.name ?? '',
+      apps,
+      audit,
+      investors,
+      version,
+      error,
+      clearError: () => setError(null),
+      refresh,
+      login: async (login, password) => enter(await api.login(login, password)),
+      demo: async (role) => {
+        try {
+          await enter(await api.demoLogin(role));
+        } catch (e) {
+          setError(errorMessage(e));
+        }
+      },
+      logout: async () => {
+        await api.logout().catch(() => {});
+        setMe(null);
+        await loadData(null);
+      },
+      reset: () => perform(() => api.reset()).then(() => {}),
+      perform,
+    };
+  }, [ready, demoLogin, me, apps, audit, investors, version, error, refresh, loadData]);
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
 }
 
 export function useStore() {
   const c = useContext(StoreCtx);
-  if (!c) throw new Error('StoreProvider yo\'q');
+  if (!c) throw new Error("StoreProvider yo'q");
   return c;
-}
-
-/** Joriy rol uchun harakat talab qiladigan arizalar */
-export function tasksFor(role: Role | null, apps: Application[]) {
-  if (!role) return [];
-  return apps.filter((a) => {
-    const can = (k: ReviewKey) => role === k || role === 'admin';
-    if (a.stage === 'korik') {
-      return (can('komplayens') && a.reviews.komplayens.status !== 'tasdiqlandi') ||
-        (can('investitsiya') && a.reviews.investitsiya.status !== 'tasdiqlandi');
-    }
-    if (a.stage === 'yuridik') return can('yuridik');
-    if (a.stage === 'yangi' || a.stage === 'imzolash') return role === 'menejer' || role === 'admin';
-    return false;
-  });
-}
-
-export function profitOf(r: { revenue: number; expenses: number }) {
-  return r.revenue - r.expenses;
 }

@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { Badge, Card, Empty, inputCls, PageHeader } from '../components/ui';
 import { ROLES } from '../data/mock';
-import type { Role } from '../data/types';
-import { dateTime } from '../lib/format';
+import type { Role } from '../../shared/types';
+import { dateTime } from '../../shared/format';
 import { ROLE_TONE } from '../lib/labels';
 import { useStore } from '../store';
 

@@ -3,3 +3,5 @@ dist
 dist-artifact
 artifact
 *.log
+.env
+.data

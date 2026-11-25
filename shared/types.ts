@@ -1,3 +1,5 @@
+// Frontend va backend uchun umumiy domen turlari.
+
 export type Role =
   | 'admin'
   | 'menejer'
@@ -8,9 +10,15 @@ export type Role =
   | 'investor'
   | 'biznes';
 
+export const ROLE_IDS: Role[] = ['admin', 'menejer', 'komplayens', 'investitsiya', 'yuridik', 'audit', 'investor', 'biznes'];
+
+/** Ichki xodim rollari (biznes va investor emas) */
+export const STAFF_ROLES: Role[] = ['admin', 'menejer', 'komplayens', 'investitsiya', 'yuridik', 'audit'];
+
 export type Stage =
   | 'yangi'
   | 'korik'
+  | 'qaytarildi'
   | 'yuridik'
   | 'imzolash'
   | 'moliyalashtirildi'
@@ -18,6 +26,8 @@ export type Stage =
   | 'rad';
 
 export type ReviewKey = 'komplayens' | 'investitsiya' | 'yuridik';
+export const REVIEW_KEYS: ReviewKey[] = ['komplayens', 'investitsiya', 'yuridik'];
+
 export type ReviewStatus = 'kutilmoqda' | 'tasdiqlandi' | 'rad' | 'qayta';
 
 export interface Review {
@@ -68,12 +78,17 @@ export interface Application extends ApplicationInput {
   id: string;
   submittedAt: string;
   stage: Stage;
+  /** Arizani topshirgan biznes foydalanuvchisi (bo'lmasligi mumkin — menejer kiritgan bo'lsa) */
+  ownerId?: string;
+  managerId?: string;
   manager: string;
+  investorId?: string;
   investor?: string;
   agreementNo?: string;
   fundedAt?: string;
   reviews: Record<ReviewKey, Review>;
-  ai: AiAnalysis;
+  /** Investor va biznesga ko'rsatilmaydi (server olib tashlaydi) */
+  ai?: AiAnalysis;
   reports: MonthlyReport[];
 }
 
@@ -93,4 +108,13 @@ export interface Investor {
   stir: string;
   contact: string;
   capital: number; // investitsiya uchun ajratilgan mablag'
+}
+
+/** Tizimga kirgan foydalanuvchi */
+export interface User {
+  id: string;
+  login: string;
+  name: string;
+  role: Role;
+  investorId?: string;
 }

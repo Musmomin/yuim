@@ -1,6 +1,6 @@
 import { Badge, Card, PageHeader } from '../components/ui';
 import { INVESTORS } from '../data/mock';
-import { shortMoney } from '../lib/format';
+import { shortMoney } from '../../shared/format';
 import { useStore } from '../store';
 
 export default function Investors() {

@@ -1,21 +1,15 @@
 // Test uchun AI tahlili: hozircha qoidaga asoslangan soxta model.
 // Keyinchalik shu funksiya o'rniga haqiqiy AI xizmati chaqiriladi —
-// interfeys (AiAnalysis) o'zgarmaydi.
-import { RESTRICTED } from '../data/policy';
-import type { AiAnalysis, ApplicationInput } from '../data/types';
-import { shortMoney } from '../lib/format';
+// interfeys (AiAnalysis) o'zgarmaydi. Server har doim o'zi qayta hisoblaydi,
+// frontend faqat forma to'ldirilayotganda oldindan ko'rsatish uchun ishlatadi.
+import { findRestricted } from './policy';
+import type { AiAnalysis, ApplicationInput } from './types';
+import { shortMoney } from './format';
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
 export function analyze(a: ApplicationInput): AiAnalysis {
-  const text = `${a.sector} ${a.activity} ${a.purpose}`.toLowerCase();
-  let activityHit: string | undefined;
-  for (const item of RESTRICTED) {
-    if (item.keywords.some((k) => text.includes(k))) {
-      activityHit = item.name;
-      break;
-    }
-  }
+  const activityHit = findRestricted(`${a.sector} ${a.activity} ${a.purpose}`);
 
   const margin = a.revenue12m > 0 ? a.profit12m / a.revenue12m : 0;
   const leverage = a.revenue12m > 0 ? a.amount / a.revenue12m : 9;

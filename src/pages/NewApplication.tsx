@@ -1,16 +1,28 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Bot, ShieldAlert } from 'lucide-react';
-import { analyze } from '../ai/analyze';
-import { Badge, Button, Card, CardHeader, Field, inputCls, PageHeader, RiskMeter } from '../components/ui';
-import { REGIONS, SECTORS } from '../data/policy';
-import type { ApplicationInput } from '../data/types';
+import { analyze } from '../../shared/analyze';
+import { Badge, Button, Card, CardHeader, ErrorBanner, Field as BaseField, inputCls, PageHeader, RiskMeter } from '../components/ui';
+import { REGIONS, SECTORS } from '../../shared/policy';
+import type { ApplicationInput } from '../../shared/types';
+import { canEdit } from '../../shared/workflow';
+import { ApiError, errorMessage } from '../api';
 import { ACTIVITY_LABEL, RISK_LABEL, RISK_TONE } from '../lib/labels';
-import { useStore } from '../store';
+import { api, useStore } from '../store';
 
+const FIELDS: (keyof ApplicationInput)[] = [
+  'company', 'stir', 'director', 'phone', 'region', 'sector', 'activity', 'amount', 'termMonths', 'investorShare', 'purpose', 'revenue12m', 'profit12m', 'employees',
+];
+
+/** Yangi ariza yoki mavjud arizani tahrirlash (/arizalar/:id/tahrir) */
 export default function NewApplication() {
-  const { role, user, addApplication } = useStore();
+  const { id } = useParams();
+  const { role, user, actor, refresh } = useStore();
   const navigate = useNavigate();
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(!id);
   const [f, setF] = useState<ApplicationInput>({
     company: role === 'biznes' ? user : '',
     stir: '',
@@ -27,14 +39,53 @@ export default function NewApplication() {
     profit12m: 0,
     employees: 10,
   });
-  const set = <K extends keyof ApplicationInput>(k: K, v: ApplicationInput[K]) => setF((p) => ({ ...p, [k]: v }));
+  useEffect(() => {
+    if (!id) return;
+    api
+      .application(id)
+      .then(({ application: a }) => {
+        if (actor && !canEdit(actor, a)) {
+          setFormError("Bu arizani hozir tahrirlab bo'lmaydi");
+          return;
+        }
+        setF(Object.fromEntries(FIELDS.map((k) => [k, a[k]])) as unknown as ApplicationInput);
+        setLoaded(true);
+      })
+      .catch((e) => setFormError(errorMessage(e)));
+  }, [id, actor]);
+
+  const set = <K extends keyof ApplicationInput>(k: K, v: ApplicationInput[K]) => {
+    setF((p) => ({ ...p, [k]: v }));
+    setErrors((p) => ({ ...p, [k]: '' }));
+  };
   const ai = useMemo(() => analyze(f), [f]);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    const id = addApplication(f);
-    navigate(`/arizalar/${id}`);
+    setBusy(true);
+    setFormError(null);
+    try {
+      const saved = id ? await api.update(id, f) : await api.create(f);
+      await refresh();
+      navigate(`/arizalar/${saved.id}`);
+    } catch (x) {
+      if (x instanceof ApiError && x.fields) setErrors(x.fields);
+      setFormError(errorMessage(x));
+    } finally {
+      setBusy(false);
+    }
   };
+
+  // Maydon ostida server qaytargan xato (oddiy funksiya — komponent emas, aks holda input fokusni yo'qotadi)
+  const field = (label: string, name: keyof ApplicationInput, control: ReactNode, hint?: string) => (
+    <BaseField label={label} hint={errors[name] || hint} error={!!errors[name]}>
+      {control}
+    </BaseField>
+  );
+
+  if (!loaded) {
+    return formError ? <ErrorBanner message={formError} /> : <p className="text-sm text-slate-500">Yuklanmoqda…</p>;
+  }
 
   const numInput = (k: keyof ApplicationInput, step = 1_000_000) => (
     <input
