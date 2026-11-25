@@ -33,7 +33,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         className={`yuim-dawn fixed inset-y-0 left-0 z-40 flex w-64 flex-col text-ink-100 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="flex items-center justify-between px-5 py-5">
-          <Logo height={30} />
+          <Logo height={40} />
           <button className="lg:hidden" onClick={() => setOpen(false)} aria-label="Yopish">
             <X size={20} />
           </button>

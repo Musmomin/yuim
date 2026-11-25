@@ -18,7 +18,7 @@ export default function About({ landing = false }: { landing?: boolean }) {
         <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-8 lg:px-8 lg:pb-20 lg:pt-10">
           {landing && (
             <div className="mb-12 flex items-center justify-between gap-4">
-              <Logo height={36} />
+              <Logo height={48} />
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gold-400/15 px-3 py-1 text-xs font-medium text-gold-200">
                 <FlaskConical size={14} /> Test versiya
               </span>
