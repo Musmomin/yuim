@@ -7,6 +7,7 @@ import { dateTime, shortMoney } from '../lib/format';
 import { ROLE_TONE, STAGE_FLOW, STAGE_LABEL, STAGE_TONE } from '../lib/labels';
 import { ROLES } from '../data/mock';
 import { profitOf, tasksFor, useStore } from '../store';
+import { BOXES, inboxFor } from '../lib/workflow';
 
 export function alertsOf(apps: Application[]) {
   return apps
@@ -47,6 +48,8 @@ function StaffHome() {
         <Stat label="Mening vazifalarim" value={tasks.length} hint="Sizning qaroringizni kutmoqda" icon={<ClipboardCheck size={18} />} />
         <Stat label="Monitoring ogohlantirishlari" value={alerts.length} hint="Foyda rejadan 30%+ past" icon={<AlertTriangle size={18} />} />
       </div>
+
+      <InboxSummary />
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -108,6 +111,39 @@ function StaffHome() {
         </Card>
       </div>
     </>
+  );
+}
+
+function InboxSummary() {
+  const { role, apps } = useStore();
+  if (!role || !['admin', 'menejer', 'komplayens', 'investitsiya', 'yuridik'].includes(role)) return null;
+  const box = inboxFor(role, apps);
+  const all = [...box.korib, ...box.qayta, ...box.imzo, ...box.nazorat];
+  const overdue = all.filter((r) => r.state === 'otgan').length;
+  const soon = all.filter((r) => r.state === 'yaqin').length;
+  return (
+    <Card className="mt-6">
+      <CardHeader
+        title="Kiruvchi"
+        subtitle="Hujjat aylanishidagi qutilaringiz"
+        action={
+          <div className="flex gap-2 text-xs">
+            <Badge tone={overdue ? 'red' : 'slate'}>Muddati o'tgan: {overdue}</Badge>
+            <Badge tone={soon ? 'amber' : 'slate'}>Yaqinlashayotgan: {soon}</Badge>
+          </div>
+        }
+      />
+      <div className="grid gap-px bg-slate-100 sm:grid-cols-3 lg:grid-cols-5">
+        {BOXES.map((b) => (
+          <Link key={b.id} to={`/hujjatlar?quti=${b.id}`} className="flex items-center justify-between gap-3 bg-white px-5 py-4 hover:bg-slate-50">
+            <span className="text-sm text-slate-600">{b.label}</span>
+            <span className={`text-xl font-semibold tabular-nums ${box[b.id].some((r) => r.state === 'otgan') ? 'text-rose-600' : 'text-slate-900'}`}>
+              {box[b.id].length}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </Card>
   );
 }
 

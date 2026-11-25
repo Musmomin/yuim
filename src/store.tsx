@@ -5,22 +5,27 @@ import type { Application, ApplicationInput, AuditEntry, ReviewKey, ReviewStatus
 import { REVIEW_BODY, REVIEW_LABEL } from './lib/labels';
 
 // Test rejimi: holat brauzerda saqlanadi. Backend ulanganda shu qatlam API'ga almashtiriladi.
-const KEY = 'yuim-test-v2';
+const KEY = 'yuim-test-v3';
 
 interface State {
   role: Role | null;
   apps: Application[];
   audit: AuditEntry[];
+  /** O'qilgan bildirishnomalar */
+  read: string[];
 }
 
 function fresh(): State {
-  return { role: null, apps: seedApplications(), audit: seedAudit() };
+  return { role: null, apps: seedApplications(), audit: seedAudit(), read: [] };
 }
 
 function load(): State {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as State;
+    if (raw) {
+      const s = JSON.parse(raw) as Partial<State>;
+      return { ...fresh(), ...s, read: s.read ?? [] };
+    }
   } catch {
     /* saqlash imkoni yo'q — test ma'lumoti bilan davom etamiz */
   }
@@ -37,9 +42,12 @@ interface Ctx extends State {
   complete: (id: string) => void;
   addApplication: (input: ApplicationInput) => string;
   reset: () => void;
+  markRead: (ids: string[]) => void;
 }
 
 const StoreCtx = createContext<Ctx | null>(null);
+
+const now = () => new Date().toISOString();
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>(load);
@@ -76,7 +84,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     login: (role) => setState((s) => ({ ...s, role })),
     logout: () => setState((s) => ({ ...s, role: null })),
 
-    submitToCommittees: (id) => updateApp(id, (a) => ({ ...a, stage: 'korik' }), "Ariza qo'mitalarga yuborildi"),
+    submitToCommittees: (id) =>
+      updateApp(id, (a) => ({ ...a, stage: 'korik', sentAt: now(), stageAt: now() }), "Ariza qo'mitalarga yuborildi"),
 
     review: (id, key, status, comment) =>
       updateApp(
@@ -87,7 +96,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           if (status === 'rad') stage = 'rad';
           else if (key !== 'yuridik' && reviews.komplayens.status === 'tasdiqlandi' && reviews.investitsiya.status === 'tasdiqlandi') stage = 'yuridik';
           else if (key === 'yuridik' && status === 'tasdiqlandi') stage = 'imzolash';
-          return { ...a, reviews, stage };
+          return { ...a, reviews, stage, stageAt: stage === a.stage ? a.stageAt : now() };
         },
         `${REVIEW_BODY[key].title}: ${REVIEW_LABEL[status].toLowerCase()}`,
       ),
@@ -103,13 +112,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return {
           ...s,
           apps: s.apps.map((a) =>
-            a.id === id ? { ...a, stage: 'moliyalashtirildi', investor, agreementNo, fundedAt: new Date().toISOString() } : a,
+            a.id === id ? { ...a, stage: 'moliyalashtirildi', investor, agreementNo, fundedAt: now(), stageAt: now() } : a,
           ),
           audit: [entry(`Shartnoma ${agreementNo} imzolandi, moliyalashtirildi (${investor})`, id), ...s.audit],
         };
       }),
 
-    complete: (id) => updateApp(id, (a) => ({ ...a, stage: 'yakunlandi' }), 'Shartnoma yakunlandi, yakuniy hisob-kitob qilindi'),
+    complete: (id) => updateApp(id, (a) => ({ ...a, stage: 'yakunlandi', stageAt: now() }), 'Shartnoma yakunlandi, yakuniy hisob-kitob qilindi'),
 
     addApplication: (input) => {
       const id = `YU-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 900) + 100)}`;
@@ -128,6 +137,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     },
 
     reset: () => setState({ ...fresh(), role: state.role }),
+
+    markRead: (ids) => setState((s) => ({ ...s, read: [...new Set([...s.read, ...ids])] })),
   };
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;

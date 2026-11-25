@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Bot, CheckCircle2, FileText, Info, RotateCcw, Send, ShieldAlert, XCircle } from 'lucide-react';
+import { ArrowLeft, Bot, CheckCircle2, Clock, FileText, Info, RotateCcw, Send, ShieldAlert, XCircle } from 'lucide-react';
 import { Badge, Button, Card, CardHeader, inputCls, KV, PageHeader, RiskMeter, StageTracker } from '../components/ui';
-import { INVESTORS } from '../data/mock';
+import { INVESTORS, ROLES } from '../data/mock';
 import type { Application, ReviewKey } from '../data/types';
 import { date, dateTime, money, shortMoney } from '../lib/format';
 import { ACTIVITY_LABEL, REVIEW_BODY, REVIEW_LABEL, REVIEW_TONE, RISK_LABEL, RISK_TONE, STAGE_LABEL, STAGE_TONE } from '../lib/labels';
 import { useStore } from '../store';
+import { DAY, PROMISE_DAYS, remaining, reviewDeadline, reviewStart, sentAt, timing } from '../lib/workflow';
 
 const DOCS = [
   'Davlat ro\'yxatidan o\'tganlik guvohnomasi',
@@ -46,7 +47,12 @@ export default function ApplicationDetail() {
       <PageHeader
         title={a.company}
         subtitle={`${a.id} · STIR ${a.stir} · ${a.region} · topshirilgan ${date(a.submittedAt)}`}
-        action={<Badge tone={STAGE_TONE[a.stage]}>{STAGE_LABEL[a.stage]}</Badge>}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <PromiseChip a={a} />
+            <Badge tone={STAGE_TONE[a.stage]}>{STAGE_LABEL[a.stage]}</Badge>
+          </div>
+        }
       />
       <Card className="mb-6 p-5">
         <StageTracker stage={a.stage} />
@@ -91,8 +97,9 @@ export default function ApplicationDetail() {
 
           {isStaff && (
             <Card>
-              <CardHeader title="Qo'mitalar xulosalari" subtitle="Komplayens va investitsiya qo'mitalari parallel ko'radi, so'ng yuridik ekspertiza" />
-              <div className="divide-y divide-slate-100">
+              <CardHeader title="Rezolyutsiya" subtitle="Komplayens va investitsiya qo'mitalari parallel ko'radi, so'ng yuridik ekspertiza" />
+              <ResolutionRoot a={a} />
+              <div className="ml-9 border-l-2 border-slate-100 pb-2">
                 {(['komplayens', 'investitsiya', 'yuridik'] as ReviewKey[]).map((k) => (
                   <ReviewRow key={k} a={a} k={k} />
                 ))}
@@ -190,8 +197,53 @@ function AiCard({ a }: { a: Application }) {
   );
 }
 
+function Avatar({ name }: { name: string }) {
+  return (
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-xs font-semibold text-white">
+      {name.replace(/^[A-Z]. /, '').slice(0, 1)}
+    </span>
+  );
+}
+
+/** Biznesga berilgan 14 kunlik va'da: qancha vaqt qoldi */
+function PromiseChip({ a }: { a: Application }) {
+  if (!['yangi', 'korik', 'yuridik'].includes(a.stage)) return null;
+  const deadline = new Date(new Date(a.submittedAt).getTime() + PROMISE_DAYS * DAY).toISOString();
+  const t = timing(deadline);
+  const tone = t === 'otgan' ? 'bg-rose-50 text-rose-700' : t === 'yaqin' ? 'bg-amber-50 text-amber-800' : 'bg-sky-50 text-sky-700';
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium ${tone}`} title={`${PROMISE_DAYS} kunlik javob muddati: ${dateTime(deadline)}`}>
+      <Clock size={14} /> Javob muddati: {date(deadline)} · {remaining(deadline)}
+    </span>
+  );
+}
+
+function ResolutionRoot({ a }: { a: Application }) {
+  const sent = a.stage !== 'yangi';
+  return (
+    <div className="flex items-start gap-3 px-5 pt-4">
+      <Avatar name={a.manager} />
+      <div className="min-w-0 flex-1 rounded-lg border border-slate-200 p-3 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="font-medium text-slate-900">
+            {a.manager} <span className="ml-1 rounded bg-sky-50 px-1.5 py-0.5 text-[11px] font-medium text-sky-700">mas'ul</span>
+          </p>
+          <Badge tone={sent ? 'green' : 'amber'}>{sent ? 'Bajarildi' : 'Kutilmoqda'}</Badge>
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          {sent ? `Qo'mitalar ko'rigiga yuborildi · ${dateTime(sentAt(a))}` : "Ariza to'liqligini tekshirib, qo'mitalarga yuborishi kerak"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ReviewRow({ a, k }: { a: Application; k: ReviewKey }) {
-  const { role, review } = useStore();
+  const { role, review, audit } = useStore();
+  const assignee = ROLES.find((x) => x.id === k)?.user ?? '';
+  const start = reviewStart(a, k);
+  const deadline = reviewDeadline(a, k);
+  const chain = audit.filter((e) => e.target === a.id && e.action.startsWith(`${REVIEW_BODY[k].title}:`)).reverse();
   const [comment, setComment] = useState('');
   const r = a.reviews[k];
   const body = REVIEW_BODY[k];
@@ -209,15 +261,38 @@ function ReviewRow({ a, k }: { a: Application; k: ReviewKey }) {
   const [missing, setMissing] = useState(false);
   const alertMissing = () => setMissing(true);
 
+  const live = r.status === 'kutilmoqda' || r.status === 'qayta';
+  const t = timing(deadline);
   return (
-    <div className="px-5 py-4">
+    <div className="relative py-3 pl-6 pr-5">
+      <span className="absolute left-0 top-7 h-0.5 w-4 bg-slate-100" />
+      <div className="flex items-start gap-3">
+      <Avatar name={r.by ?? assignee} />
+      <div className="min-w-0 flex-1 rounded-lg border border-slate-200 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-medium text-slate-900">{body.title}</p>
-          <p className="text-xs text-slate-500">{body.desc}</p>
+          <p className="text-xs text-slate-500">
+            {r.by ?? assignee} · {body.desc}
+          </p>
         </div>
         <Badge tone={REVIEW_TONE[r.status]}>{REVIEW_LABEL[r.status]}</Badge>
       </div>
+      {start && deadline && live && a.stage !== 'rad' && (
+        <p className={`mt-2 inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs ${t === 'otgan' ? 'bg-rose-50 text-rose-700' : t === 'yaqin' ? 'bg-amber-50 text-amber-800' : 'bg-slate-50 text-slate-600'}`}>
+          <Clock size={12} /> Muddat: {dateTime(deadline)} · {remaining(deadline)}
+        </p>
+      )}
+      {!start && a.stage !== 'rad' && <p className="mt-2 text-xs text-slate-400">{k === 'yuridik' ? "Ikkala qo'mita tasdiqlagach boshlanadi" : "Ariza qo'mitalarga yuborilgach boshlanadi"}</p>}
+      {chain.length > 1 && (
+        <ol className="mt-2 space-y-1 border-l-2 border-slate-100 pl-3 text-xs text-slate-500">
+          {chain.slice(0, -1).map((e) => (
+            <li key={e.id}>
+              {e.action.split(': ')[1]} · {e.user} · {dateTime(e.at)}
+            </li>
+          ))}
+        </ol>
+      )}
       {r.by && (
         <div className="mt-2 rounded-lg bg-slate-50 p-3 text-sm">
           {r.comment && <p className="text-slate-800">«{r.comment}»</p>}
@@ -252,6 +327,8 @@ function ReviewRow({ a, k }: { a: Application; k: ReviewKey }) {
           </div>
         </div>
       )}
+      </div>
+      </div>
     </div>
   );
 }

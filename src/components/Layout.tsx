@@ -4,7 +4,12 @@ import { FlaskConical, LogOut, Menu, RotateCcw, X } from 'lucide-react';
 import { ROLES } from '../data/mock';
 import type { Role } from '../data/types';
 import { tasksFor, useStore } from '../store';
+import { inboxFor } from '../lib/workflow';
 import { NAV } from './nav';
+import Notifications from './Notifications';
+
+/** Test rejimi: rolni almashtirish va ma'lumotni qaytarish faqat shu rejimda. `VITE_TEST_MODE=false` bilan o'chadi. */
+export const TEST_MODE = import.meta.env.VITE_TEST_MODE !== 'false';
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { role, user, apps, login, logout, reset } = useStore();
@@ -16,6 +21,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   const items = NAV.filter((n) => role && n.roles.includes(role));
   const taskCount = tasksFor(role, apps).length;
   const roleInfo = ROLES.find((r) => r.id === role);
+  const inbox = role ? inboxFor(role, apps) : null;
+  const inboxCount = inbox ? inbox.korib.length + inbox.imzo.length : 0;
+  const inboxLate = !!inbox && [...inbox.korib, ...inbox.imzo].some((r) => r.state === 'otgan');
 
   return (
     <div className="min-h-screen bg-slate-50 lg:flex">
@@ -43,6 +51,9 @@ export default function Layout({ children }: { children: ReactNode }) {
             >
               <Icon size={18} />
               <span className="flex-1">{label}</span>
+              {to === '/hujjatlar' && inboxCount > 0 && (
+                <span className={`rounded-full px-2 text-xs font-semibold ${inboxLate ? 'bg-rose-500 text-white' : 'bg-amber-400 text-slate-900'}`}>{inboxCount}</span>
+              )}
               {to === '/vazifalar' && taskCount > 0 && (
                 <span className="rounded-full bg-amber-400 px-2 text-xs font-semibold text-slate-900">{taskCount}</span>
               )}
@@ -58,10 +69,14 @@ export default function Layout({ children }: { children: ReactNode }) {
           <button className="rounded-lg p-1.5 hover:bg-slate-100 lg:hidden" onClick={() => setOpen(true)} aria-label="Menyu">
             <Menu size={20} />
           </button>
-          <span className="hidden items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 sm:inline-flex">
-            <FlaskConical size={14} /> Test rejimi
-          </span>
+          {TEST_MODE && (
+            <span className="hidden items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800 sm:inline-flex">
+              <FlaskConical size={14} /> Test rejimi
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-2">
+            <Notifications />
+            {TEST_MODE && (
             <select
               value={role ?? ''}
               onChange={(e) => {
@@ -77,17 +92,25 @@ export default function Layout({ children }: { children: ReactNode }) {
                 </option>
               ))}
             </select>
-            <div className="hidden text-right md:block">
-              <div className="text-sm font-medium text-slate-900">{user}</div>
-              <div className="text-xs text-slate-500">{roleInfo?.label}</div>
+            )}
+            <div className={`items-center gap-2 ${TEST_MODE ? 'hidden md:flex' : 'flex'}`}>
+              {!TEST_MODE && (
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-700 text-sm font-semibold text-white">{user.slice(0, 1)}</span>
+              )}
+              <div className="text-right">
+                <div className="text-sm font-medium text-slate-900">{user}</div>
+                <div className="text-xs text-slate-500">{roleInfo?.label}</div>
+              </div>
             </div>
-            <button
-              onClick={() => reset()}
-              className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
-              title="Test ma'lumotlarini boshlang'ich holatga qaytarish"
-            >
-              <RotateCcw size={18} />
-            </button>
+            {TEST_MODE && (
+              <button
+                onClick={() => reset()}
+                className="rounded-lg p-2 text-slate-500 hover:bg-slate-100"
+                title="Test ma'lumotlarini boshlang'ich holatga qaytarish"
+              >
+                <RotateCcw size={18} />
+              </button>
+            )}
             <button onClick={logout} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" title="Chiqish">
               <LogOut size={18} />
             </button>

@@ -7,6 +7,9 @@ import Agreements from './pages/Agreements';
 import ApplicationDetail from './pages/ApplicationDetail';
 import Applications from './pages/Applications';
 import Audit from './pages/Audit';
+import Calendar from './pages/Calendar';
+import Inbox from './pages/Inbox';
+import Stats from './pages/Stats';
 import Dashboard from './pages/Dashboard';
 import Distribution from './pages/Distribution';
 import Investors from './pages/Investors';
@@ -32,6 +35,9 @@ function Shell() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/vazifalar" element={<Guard path="/vazifalar" el={<Tasks />} />} />
+        <Route path="/hujjatlar" element={<Guard path="/hujjatlar" el={<Inbox />} />} />
+        <Route path="/kalendar" element={<Guard path="/kalendar" el={<Calendar />} />} />
+        <Route path="/statistika" element={<Guard path="/statistika" el={<Stats />} />} />
         <Route path="/arizalar" element={<Guard path="/arizalar" el={<Applications />} />} />
         <Route path="/arizalar/yangi" element={<Guard path="/arizalar/yangi" el={<NewApplication />} />} />
         <Route path="/arizalar/:id" element={<ApplicationDetail />} />

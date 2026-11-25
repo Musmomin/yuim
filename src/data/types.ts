@@ -68,6 +68,10 @@ export interface Application extends ApplicationInput {
   id: string;
   submittedAt: string;
   stage: Stage;
+  /** Qo'mitalarga yuborilgan vaqt */
+  sentAt?: string;
+  /** Joriy bosqichga o'tgan vaqt (muddatni hisoblash uchun) */
+  stageAt?: string;
   manager: string;
   investor?: string;
   agreementNo?: string;

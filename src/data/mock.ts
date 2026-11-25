@@ -56,6 +56,7 @@ function genReports(start: string, months: number, monthlyRevenue: number, margi
 type Seed = ApplicationInput & {
   id: string;
   submittedAt: string;
+  sentAt?: string;
   stage: Stage;
   reviews?: Partial<Application['reviews']>;
   investor?: string;
@@ -78,7 +79,7 @@ function make(s: Seed): Application {
 export function seedApplications(): Application[] {
   return [
     make({
-      id: 'YU-2026-031', submittedAt: '2026-11-14T09:20:00', stage: 'korik',
+      id: 'YU-2026-031', submittedAt: '2026-11-14T09:20:00', sentAt: '2026-11-14T14:00:00', stage: 'korik',
       company: "Navro'z Tekstil MChJ", stir: '309 512 447', director: 'Sh. Mirzayev', phone: '+998 90 123-45-67',
       region: 'Toshkent sh.', sector: 'Yengil sanoat', activity: 'Paxta gazlamasidan maktab va ish kiyimlari tikish',
       amount: 850_000_000, termMonths: 18, investorShare: 40,
@@ -87,7 +88,7 @@ export function seedApplications(): Application[] {
       reviews: { komplayens: ok('S. Yusupova', '2026-11-17T11:05:00', "Faoliyat turi ruxsat etilgan ro'yxatda.") },
     }),
     make({
-      id: 'YU-2026-030', submittedAt: '2026-11-12T15:40:00', stage: 'korik',
+      id: 'YU-2026-030', submittedAt: '2026-11-12T15:40:00', sentAt: '2026-11-13T10:30:00', stage: 'korik',
       company: 'Namangan Non Kombinati MChJ', stir: '308 220 913', director: 'A. Qodirov', phone: '+998 91 220-33-44',
       region: 'Namangan', sector: 'Oziq-ovqat ishlab chiqarish', activity: 'Non va qandolat mahsulotlari ishlab chiqarish',
       amount: 500_000_000, termMonths: 12, investorShare: 36,
@@ -106,7 +107,7 @@ export function seedApplications(): Application[] {
       revenue12m: 900_000_000, profit12m: 150_000_000, employees: 15,
     }),
     make({
-      id: 'YU-2026-027', submittedAt: '2026-11-03T12:00:00', stage: 'yuridik',
+      id: 'YU-2026-027', submittedAt: '2026-11-03T12:00:00', sentAt: '2026-11-04T09:00:00', stage: 'yuridik',
       company: 'Samarqand Agro Eksport MChJ', stir: '307 845 102', director: 'F. Norqulov', phone: '+998 93 340-50-60',
       region: 'Samarqand', sector: "Qishloq xo'jaligi", activity: "Quritilgan meva qayta ishlash va eksport",
       amount: 1_500_000_000, termMonths: 24, investorShare: 45,
@@ -118,7 +119,7 @@ export function seedApplications(): Application[] {
       },
     }),
     make({
-      id: 'YU-2026-024', submittedAt: '2026-10-21T09:00:00', stage: 'imzolash',
+      id: 'YU-2026-024', submittedAt: '2026-10-20T15:30:00', sentAt: '2026-10-21T09:00:00', stage: 'imzolash',
       company: 'Buxoro Qurilish Materiallari MChJ', stir: '306 731 288', director: 'R. Jo\'rayev', phone: '+998 65 221-12-12',
       region: 'Buxoro', sector: 'Qurilish materiallari', activity: 'Gazoblok ishlab chiqarish',
       amount: 2_000_000_000, termMonths: 30, investorShare: 42,
@@ -131,7 +132,7 @@ export function seedApplications(): Application[] {
       },
     }),
     make({
-      id: 'YU-2026-018', submittedAt: '2026-04-20T10:00:00', stage: 'moliyalashtirildi',
+      id: 'YU-2026-018', submittedAt: '2026-04-20T10:00:00', sentAt: '2026-04-21T10:00:00', stage: 'moliyalashtirildi',
       company: "Farg'ona Mebel Servis MChJ", stir: '305 990 140', director: 'U. Tojiboyev', phone: '+998 73 244-55-66',
       region: "Farg'ona", sector: 'Mebel ishlab chiqarish', activity: 'Ofis va maktab mebellari ishlab chiqarish',
       amount: 600_000_000, termMonths: 12, investorShare: 35,
@@ -146,7 +147,7 @@ export function seedApplications(): Application[] {
       reports: genReports('2026-05', 6, 200_000_000, 0.13, 7),
     }),
     make({
-      id: 'YU-2026-009', submittedAt: '2026-02-10T10:00:00', stage: 'moliyalashtirildi',
+      id: 'YU-2026-009', submittedAt: '2026-02-10T10:00:00', sentAt: '2026-02-11T10:00:00', stage: 'moliyalashtirildi',
       company: 'Xorazm Sut Mahsulotlari MChJ', stir: '304 118 905', director: 'M. Yoqubov', phone: '+998 62 225-77-88',
       region: 'Xorazm', sector: 'Oziq-ovqat ishlab chiqarish', activity: 'Sut va sut mahsulotlarini qayta ishlash',
       amount: 1_100_000_000, termMonths: 24, investorShare: 38,
@@ -161,7 +162,7 @@ export function seedApplications(): Application[] {
       reports: genReports('2026-03', 8, 340_000_000, 0.08, 21, 0.45),
     }),
     make({
-      id: 'YU-2025-031', submittedAt: '2025-03-25T10:00:00', stage: 'yakunlandi',
+      id: 'YU-2025-031', submittedAt: '2025-03-25T10:00:00', sentAt: '2025-03-26T10:00:00', stage: 'yakunlandi',
       company: 'Andijon Avto Detal MChJ', stir: '303 662 017', director: 'I. Xolmatov', phone: '+998 74 223-90-10',
       region: 'Andijon', sector: 'Avtomobil ehtiyot qismlari', activity: 'Avtomobil ehtiyot qismlari ulgurji savdosi',
       amount: 950_000_000, termMonths: 12, investorShare: 40,
@@ -176,7 +177,7 @@ export function seedApplications(): Application[] {
       reports: genReports('2025-05', 12, 620_000_000, 0.065, 3),
     }),
     make({
-      id: 'YU-2026-026', submittedAt: '2026-10-28T10:00:00', stage: 'rad',
+      id: 'YU-2026-026', submittedAt: '2026-10-28T10:00:00', sentAt: '2026-10-29T09:00:00', stage: 'rad',
       company: "Navoiy O'yin Markazi MChJ", stir: '309 001 774', director: 'K. Ismoilov', phone: '+998 79 222-10-10',
       region: 'Navoiy', sector: "Xizmat ko'rsatish", activity: 'Lotereya va bukmekerlik shoxobchalari tarmog\'i',
       amount: 700_000_000, termMonths: 12, investorShare: 40,
@@ -200,6 +201,7 @@ export function seedAudit(): AuditEntry[] {
     e('a4', '2026-11-08T11:40:00', 'N. Aliyeva', 'yuridik', 'Yuridik xizmat: tasdiqlandi', 'YU-2026-024'),
     e('a3', '2026-11-05T09:00:00', 'O. Hamidov', 'audit', "Oktabr oyi jarayonlari bo'yicha taftish yakunlandi"),
     e('a2', '2026-10-30T09:15:00', 'S. Yusupova', 'komplayens', "Komplayens qo'mitasi: rad etildi", 'YU-2026-026'),
+    e('a0', '2026-10-20T15:30:00', 'Buxoro Qurilish Materiallari MChJ', 'biznes', 'Yangi ariza topshirildi', 'YU-2026-024'),
     e('a1', '2026-10-21T09:00:00', 'D. Rasulov', 'menejer', "Ariza qo'mitalarga yuborildi", 'YU-2026-024'),
   ];
 }
