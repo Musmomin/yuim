@@ -18,7 +18,7 @@ export default function About({ landing = false }: { landing?: boolean }) {
         <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-8 lg:px-8 lg:pb-20 lg:pt-10">
           {landing && (
             <div className="mb-12 flex items-center justify-between gap-4">
-              <Logo size={46} />
+              <Logo height={36} />
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-gold-400/15 px-3 py-1 text-xs font-medium text-gold-200">
                 <FlaskConical size={14} /> Test versiya
               </span>
@@ -183,7 +183,7 @@ export default function About({ landing = false }: { landing?: boolean }) {
 const PILLARS = [
   {
     word: "Sog'lom",
-    lead: 'Shaffof va adolatli hamkorlik',
+    lead: "Shaffof hamkorlik, sog'lom daromad",
     text: "Daromad oldindan va'da qilinmaydi — biznesning haqiqiy natijasidan kelishilgan nisbatda bo'linadi. Har bir qaror audit jurnalida qoladi.",
     icon: HeartPulse,
     tone: 'bg-emerald-50 text-emerald-700',
