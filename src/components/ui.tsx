@@ -59,7 +59,7 @@ export function Stat({ label, value, hint, icon }: { label: string; value: React
     <Card className="p-5">
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm text-slate-500">{label}</p>
-        {icon && <span className="rounded-lg bg-emerald-50 p-2 text-emerald-700">{icon}</span>}
+        {icon && <span className="rounded-lg bg-gradient-to-br from-emerald-50 to-gold-50 p-2 text-emerald-700">{icon}</span>}
       </div>
       <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">{value}</p>
       {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
@@ -71,7 +71,7 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink-900">{title}</h1>
         {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
       </div>
       {action}

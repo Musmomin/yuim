@@ -1,7 +1,13 @@
 // Loyiha ta'rifi: maqsad, boshqaruv organlari va ularning vazifalari.
 // Faqat O'zbekiston qonunchiligiga mos yuridik terminlar ishlatiladi.
 
-export const MISSION = "Sog'lom AI orqali bizneslarni o'stirish";
+export const BRAND = {
+  short: 'YUIM',
+  full: 'Yuksalish Umidi Invest Management',
+  slogan: "Sog'lom AI orqali bizneslarni o'stirish",
+};
+
+export const MISSION = BRAND.slogan;
 
 export const ORGANS: { title: string; role: string; duties: string[] }[] = [
   {

@@ -7,6 +7,8 @@ import { tasksFor, useStore } from '../store';
 import { inboxFor } from '../lib/workflow';
 import { NAV } from './nav';
 import Notifications from './Notifications';
+import { Logo } from './Logo';
+import { BRAND } from '../data/org';
 
 /** Test rejimi: rolni almashtirish va ma'lumotni qaytarish faqat shu rejimda. `VITE_TEST_MODE=false` bilan o'chadi. */
 export const TEST_MODE = import.meta.env.VITE_TEST_MODE !== 'false';
@@ -28,13 +30,10 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-50 lg:flex">
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-slate-900 text-slate-300 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`yuim-dawn fixed inset-y-0 left-0 z-40 flex w-64 flex-col text-ink-100 transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}
       >
         <div className="flex items-center justify-between px-5 py-5">
-          <div>
-            <div className="text-xl font-bold tracking-wide text-white">YUIM</div>
-            <div className="text-xs text-slate-400">Sog'lom AI orqali bizneslarni o'stirish</div>
-          </div>
+          <Logo size={42} />
           <button className="lg:hidden" onClick={() => setOpen(false)} aria-label="Yopish">
             <X size={20} />
           </button>
@@ -46,7 +45,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               to={to}
               end={to === '/' || to === '/arizalar'}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${isActive ? 'bg-emerald-700 text-white' : 'hover:bg-slate-800 hover:text-white'}`
+                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${isActive ? 'bg-white/10 font-semibold text-white shadow-[inset_3px_0_0_var(--color-gold-400)]' : 'text-ink-100/80 hover:bg-white/5 hover:text-white'}`
               }
             >
               <Icon size={18} />
@@ -60,7 +59,10 @@ export default function Layout({ children }: { children: ReactNode }) {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t border-slate-800 p-4 text-xs text-slate-500">v0.1 · test versiya</div>
+        <div className="border-t border-white/10 p-4">
+          <p className="text-xs font-medium leading-relaxed text-gold-200">«{BRAND.slogan}»</p>
+          <p className="mt-1 text-[11px] text-ink-300">v0.2 · test versiya</p>
+        </div>
       </aside>
       {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={() => setOpen(false)} />}
 

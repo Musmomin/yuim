@@ -10,7 +10,7 @@ if (!css || !js) throw new Error('CSS yoki JS topilmadi');
 
 const out = `<title>YUIM</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400..800&family=Sora:wght@500..800&display=swap">
 <style>${css}</style>
 <div id="root"></div>
 <script type="module">${js.replace(/<\/script/gi, '<\/script')}</script>

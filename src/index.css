@@ -1,7 +1,45 @@
 @import 'tailwindcss';
 
+/*
+ * YUIM — Yuksalish Umidi Invest Management. Brend ranglari:
+ *  - emerald: "sog'lom" o'sish yashili (asosiy rang, Tailwind emerald o'rniga)
+ *  - gold:    tong — umid (urg'u rangi, kam ishlatiladi)
+ *  - ink:     tungi ko'k — ishonch va moliya (menyu, hero)
+ */
 @theme {
   --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Sora', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+  --color-emerald-50: #ecf8f3;
+  --color-emerald-100: #d2efe3;
+  --color-emerald-200: #a6dfc8;
+  --color-emerald-300: #6fc8a6;
+  --color-emerald-400: #3aae84;
+  --color-emerald-500: #179469;
+  --color-emerald-600: #0e7a5a;
+  --color-emerald-700: #0b6349;
+  --color-emerald-800: #0a4f3b;
+  --color-emerald-900: #083f30;
+
+  --color-gold-50: #fdf7e7;
+  --color-gold-100: #faebc3;
+  --color-gold-200: #f4d688;
+  --color-gold-300: #edbf4d;
+  --color-gold-400: #e0a526;
+  --color-gold-500: #c98b14;
+  --color-gold-600: #a86f0e;
+  --color-gold-700: #7f530c;
+
+  --color-ink-50: #eef3f8;
+  --color-ink-100: #d6e1ec;
+  --color-ink-300: #8aa3bb;
+  --color-ink-400: #5f7d99;
+  --color-ink-500: #3e5c79;
+  --color-ink-600: #2a4763;
+  --color-ink-700: #16324d;
+  --color-ink-800: #0f2740;
+  --color-ink-900: #0a1f33;
+  --color-ink-950: #06141f;
 }
 
 html,
@@ -10,7 +48,21 @@ body {
   color: var(--color-slate-900);
 }
 
+h1,
+h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
 /* Ataylab bitta (yorug') mavzu */
 :root {
   color-scheme: light;
+}
+
+/* Tong nuri: hero va menyu uchun yumshoq fon */
+.yuim-dawn {
+  background:
+    radial-gradient(60% 80% at 85% 110%, rgb(224 165 38 / 0.22), transparent 60%),
+    radial-gradient(50% 60% at 10% 120%, rgb(14 122 90 / 0.35), transparent 60%),
+    linear-gradient(160deg, var(--color-ink-800), var(--color-ink-950));
 }
